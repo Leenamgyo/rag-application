@@ -1,5 +1,5 @@
 import os
-import sys
+import sys, importlib, pkgutil
 from logging.config import fileConfig
 
 from sqlalchemy import engine_from_config, pool
@@ -11,12 +11,17 @@ from alembic import context
 # 이렇게 하면 'src' 디렉토리에서 임포트할 수 있습니다.
 sys.path.insert(0, os.path.realpath(os.path.join(os.path.dirname(__file__), '..')))
 
-# 2. SQLModel과 모든 모델이 정의된 파일을 직접 임포트합니다.
-# 복잡한 자동 임포트 로직 대신, 이 한 줄로 모든 모델의 메타데이터를 로드할 수 있습니다.
-# 이것이 Alembic이 테이블을 인식하게 하는 가장 확실한 방법입니다.
-from sqlmodel import SQLModel
-from src.database.models import * # User, File 등 모든 모델을 로드
+import src
+def import_all_models(package):
+    for _, module_name, is_pkg in pkgutil.iter_modules(package.__path__):
+        full_module_name = f"{package.__name__}.{module_name}"
+        importlib.import_module(full_module_name)
+        if is_pkg:
+            import_all_models(importlib.import_module(full_module_name))
 
+import_all_models(src)
+
+from sqlmodel import SQLModel
 # 3. Alembic이 사용할 메타데이터를 SQLModel의 것으로 지정합니다.
 target_metadata = SQLModel.metadata
 
@@ -54,7 +59,9 @@ def run_migrations_online() -> None:
     with connectable.connect() as connection:
         context.configure(
             connection=connection,
-            target_metadata=target_metadata
+            target_metadata=target_metadata,
+            compare_type=True,
+            compare_server_default=True
         )
 
         with context.begin_transaction():
