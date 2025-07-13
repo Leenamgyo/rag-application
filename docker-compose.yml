@@ -1,0 +1,80 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgres:13
+    container_name: postgres_db
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_DB: test-db
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: admin123!
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+  elasticsearch:
+    build:
+      context: ./elasticsearch
+      dockerfile: es.Dockerfile
+    container_name: elasticsearch
+    ports:
+      - "9200:9200"
+      - "9300:9300"
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+      - ES_JAVA_OPTS=-Xms512m -Xmx512m
+    volumes:
+      - esdata:/usr/share/elasticsearch/data
+    networks:
+      - es-net
+
+  kibana:
+    build:
+      context: ./elasticsearch
+      dockerfile: kibana.Dockerfile
+    container_name: kibana
+    ports:
+      - "5601:5601"
+    environment:
+      ELASTICSEARCH_HOSTS: http://elasticsearch:9200
+    depends_on:
+      - elasticsearch
+    networks:
+      - es-net
+
+  # rabbitmq:
+  #   image: rabbitmq:3-management
+  #   container_name: rabbitmq
+  #   ports:
+  #     - "5672:5672"    # RabbitMQ AMQP
+  #     - "15672:15672"  # RabbitMQ Management UI
+  #   environment:
+  #     RABBITMQ_DEFAULT_USER: admin
+  #     RABBITMQ_DEFAULT_PASS: admin123!
+  #   networks:
+  #     - default
+
+  # celery:
+  #   build:
+  #     context: .
+  #     dockerfile: celery.Dockerfile
+  #   container_name: celery_worker
+  #   depends_on:
+  #     - rabbitmq
+  #     - db
+  #   environment:
+  #     - CELERY_BROKER_URL=amqp://admin:admin123!@rabbitmq:5672//
+  #     - CELERY_RESULT_BACKEND=rpc://
+  #   networks:
+  #     - default
+
+volumes:
+  pgdata:
+  esdata:
+
+# 🔽 네트워크 설정
+networks:
+  es-net:
+  default:
