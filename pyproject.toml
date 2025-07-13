@@ -9,6 +9,7 @@ dependencies = [
     "alembic>=1.16.2",
     "asyncpg>=0.30.0",
     "elasticsearch==8.13.0",
+    "elasticsearch-dsl>=8.18.0",
     "email-validator>=2.2.0",
     "fastapi>=0.115.14",
     "greenlet>=3.2.3",

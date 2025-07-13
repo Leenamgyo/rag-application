@@ -15,7 +15,7 @@ services:
 
   elasticsearch:
     build:
-      context: ./elasticsearch
+      context: ./imagess
       dockerfile: es.Dockerfile
     container_name: elasticsearch
     ports:
@@ -32,7 +32,7 @@ services:
 
   kibana:
     build:
-      context: ./elasticsearch
+      context: ./images
       dockerfile: kibana.Dockerfile
     container_name: kibana
     ports:
